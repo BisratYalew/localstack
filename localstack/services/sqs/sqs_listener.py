@@ -394,7 +394,7 @@ class ProxyListenerSQS(ProxyListener):
         queue_name = queue_url.rpartition('/')[2]
         message_body = req_data.get('MessageBody', [None])[0]
         message_attributes = format_message_attributes(req_data)
-        lambda_api.process_sqs_message(queue_name, message_body, message_attributes)
+        handle_send_message(queue_url, queue_name, message_body, message_attributes)
 
 
 # extract the external port used by the client to make the request
