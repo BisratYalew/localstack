@@ -206,6 +206,32 @@ def format_list_dl_source_queues_response(queues):
 
     return content_str.format(XMLNS_SQS, queue_urls)
 
+def handle_send_message(queue_url, queue_name, message_body, message_attributes):
+        url = 'http://localhost:4576/queue/'
+        attr = VALID_ATTRIBUTE_NAMES[-2] 
+        q = QUEUE_ATTRIBUTES.get(queue_url)
+        if(q and q['RedrivePolicy']):
+            rp = json.loads(q['RedrivePolicy'])
+            max_msg = rp['maxReceiveCount']
+            dl_queue_name = rp['deadLetterTargetArn'].rsplit(':')[-1]
+           
+            sqs_client = aws_stack.connect_to_service('sqs')
+            no_of_msg = int(sqs_client.get_queue_attributes(QueueUrl=queue_url, AttributeNames=[attr])['Attributes'][attr])
+            receipt_handle = None
+            if no_of_msg: receipt_handle = sqs_client.receive_message(QueueUrl=queue_url, AttributeNames=['ALL'])['Messages'][0]['ReceiptHandle']
+            queue_name = dl_queue_name if no_of_msg > max_msg else queue_name
+            if no_of_msg > int(max_msg):
+                message_attr = { "firstAttribute":{ "DataType":"String","StringValue":"hello world" }, "secondAttribute":{ "DataType":"String","StringValue":"goodbye world"} }
+                message_attributes = message_attr
+                dl_queue_url = url + dl_queue_name      
+                sqs_client.send_message(QueueUrl=dl_queue_url, MessageBody=message_body, MessageAttributes=message_attributes)
+                sqs_client.delete_message(QueueUrl=queue_url, ReceiptHandle=receipt_handle)
+                
+                return lambda_api.process_sqs_message(queue_name, message_body, message_attributes)
+            
+        else:        
+            return lambda_api.process_sqs_message(queue_name, message_body, message_attributes)
+
 
 class ProxyListenerSQS(ProxyListener):
     def forward_request(self, method, path, data, headers):
