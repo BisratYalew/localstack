@@ -206,7 +206,6 @@ def format_list_dl_source_queues_response(queues):
 
     return content_str.format(XMLNS_SQS, queue_urls)
 
-<<<<<<< HEAD
 def handle_send_message(queue_url, queue_name, message_body, message_attributes):
         url = 'http://localhost:4576/queue/'
         attr = VALID_ATTRIBUTE_NAMES[-2] 
@@ -233,8 +232,6 @@ def handle_send_message(queue_url, queue_name, message_body, message_attributes)
         else:        
             return lambda_api.process_sqs_message(queue_name, message_body, message_attributes)
 
-=======
->>>>>>> 57a0f3c1beef2ec1970f4fb25d975a403ce322ae
 
 class ProxyListenerSQS(ProxyListener):
     def forward_request(self, method, path, data, headers):
